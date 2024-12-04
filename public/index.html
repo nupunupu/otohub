@@ -6,5 +6,19 @@
 </head>
 <body>
   <h1>Hello World!!</h1>
+  <!-- 再生ボタン -->
+    <button id="play">play</button>
+
+    <!-- オーディオ要素 -->
+    <audio id="audio" src="sample.mp3"></audio>
+
+    <script>
+        const playButton = document.getElementById('play');
+        const audio = document.getElementById('audio');
+
+        playButton.addEventListener('click', () => {
+            audio.play();
+        });
+    </script>
 </body>
 </html>
