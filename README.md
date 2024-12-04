@@ -33,15 +33,15 @@
     ```sh
     docker run -p 8080:8080 -v $(pwd):/app otohub
     ``` -->
-    2. 依存関係をインストールします。
+2. 依存関係をインストールします。
 
-        ```sh
-        npm install
-        ```
+    ```sh
+    npm install
+    ```
 
-    3. アプリケーションを起動します。
+3. アプリケーションを起動します。
 
-        ```sh
-        npm start
-        ```
+    ```sh
+    npm start
+    ```
 4. ブラウザで `http://localhost:8080` にアクセスします。
