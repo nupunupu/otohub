@@ -3,22 +3,29 @@
 <head>
   <meta charset="UTF-8">
   <title>Minimal Express App</title>
+  <script src="/socket.io/socket.io.js"></script>
 </head>
 <body>
   <h1>Hello World!!</h1>
   <!-- 再生ボタン -->
-    <button id="play">play</button>
+  <button id="play">play</button>
 
-    <!-- オーディオ要素 -->
-    <audio id="audio" src="sample.mp3"></audio>
+  <!-- オーディオ要素 -->
+  <audio id="audio" src="sample.mp3"></audio>
 
-    <script>
-        const playButton = document.getElementById('play');
-        const audio = document.getElementById('audio');
+  <script>
+    const socket = io();
+    const playButton = document.getElementById('play');
+    const audio = document.getElementById('audio');
 
-        playButton.addEventListener('click', () => {
-            audio.play();
-        });
-    </script>
+    playButton.addEventListener('click', () => {
+      socket.emit('playAudio');
+    });
+
+    socket.on('playAudio', () => {
+      console.log('playAudio event received on client'); // デバッグ用ログ
+      audio.play();
+    });
+  </script>
 </body>
 </html>
