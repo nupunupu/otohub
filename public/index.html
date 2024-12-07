@@ -3,28 +3,69 @@
 <head>
   <meta charset="UTF-8">
   <title>Minimal Express App</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-9ndCyUaIbzAi2FUVXJi0CjmCapSmO7SnpJef0486qhLnuZ2cdeRhO02iuK6FUUVM" crossorigin="anonymous">
   <script src="/socket.io/socket.io.js"></script>
 </head>
-<body>
-  <h1>Hello World!!</h1>
+<body class="container py-5">
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js" integrity="sha384-geWF76RCwLtnZ8qwWowPQNguL3RmwHVBC9FhGdlKrxdiJJigb/j/68SIy3Te4Bkz" crossorigin="anonymous"></script>
+
+  <h1 class="mb-4">Hello World!!</h1>
+  
+  <!-- ファイルアップロードフォーム -->
+  <form id="uploadForm" enctype="multipart/form-data" class="mb-4">
+    <div class="mb-3">
+        <input type="file" id="fileInput" accept="audio/*" class="form-control">
+    </div>
+    <button type="submit" class="btn btn-primary">Upload</button>
+  </form>
+
   <!-- 再生ボタン -->
-  <button id="play">play</button>
+  <button id="play" class="btn btn-success mb-4">Play</button>
 
   <!-- オーディオ要素 -->
-  <audio id="audio" src="sample.mp3"></audio>
+  <!-- <audio id="audio" src="sample.mp3" class="d-none"></audio> -->
 
   <script>
     const socket = io();
     const playButton = document.getElementById('play');
     const audio = document.getElementById('audio');
+    const uploadForm = document.getElementById('uploadForm');
+    const fileInput = document.getElementById('fileInput');
 
     playButton.addEventListener('click', () => {
-      socket.emit('playAudio');
+      socket.emit('playAudio', "sample.mp3");
     });
 
-    socket.on('playAudio', () => {
-      console.log('playAudio event received on client'); // デバッグ用ログ
+    socket.on('playAudio', (filePath) => {
+      console.log('playAudio event received on client with filePath:', filePath);
+      const audio = new Audio(filePath);
       audio.play();
+    });
+
+    uploadForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const file = fileInput.files[0];
+      const formData = new FormData();
+      formData.append('file', file);
+
+      fetch('/upload', {
+        method: 'POST',
+        body: formData
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (data.success) {
+          const newButton = document.createElement('button');
+          newButton.textContent = `${file.name}`;
+          newButton.classList.add('btn', 'btn-info', 'mb-2');
+          newButton.addEventListener('click', () => {
+            socket.emit('playAudio', data.filePath);
+            console.log(data.filePath);
+          });
+          document.body.appendChild(newButton);
+        }
+      })
+      .catch(error => console.error('Error:', error));
     });
   </script>
 </body>
