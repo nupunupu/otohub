@@ -14,27 +14,41 @@
   <!-- ファイルアップロードフォーム -->
   <form id="uploadForm" enctype="multipart/form-data" class="mb-4">
     <div class="mb-3">
-        <input type="file" id="fileInput" accept="audio/*" class="form-control">
+      <label for="fileInput" class="form-label">音声ファイルを選択してください</label>
+      <input type="file" id="fileInput" accept="audio/*" class="form-control">
     </div>
     <button type="submit" class="btn btn-primary">Upload</button>
   </form>
 
-  <!-- 再生ボタン -->
-  <button id="play" class="btn btn-success mb-4">Play</button>
+  <!-- エラーメッセージ表示用 -->
+  <div id="errorMessage" class="alert alert-danger d-none" role="alert"></div>
 
-  <!-- オーディオ要素 -->
-  <!-- <audio id="audio" src="sample.mp3" class="d-none"></audio> -->
+  <!-- アップロードされたファイルのリスト -->
+  <div id="fileList" class="mb-4"></div>
 
   <script>
     const socket = io();
-    const playButton = document.getElementById('play');
     const audio = document.getElementById('audio');
     const uploadForm = document.getElementById('uploadForm');
     const fileInput = document.getElementById('fileInput');
+    const errorMessage = document.getElementById('errorMessage');
+    const fileList = document.getElementById('fileList');
 
-    playButton.addEventListener('click', () => {
-      socket.emit('playAudio', "sample.mp3");
-    });
+    // ページロード時に音声ファイルリストを取得してボタンを生成
+    fetch('/audiofiles')
+      .then(response => response.json())
+      .then(files => {
+        files.forEach(file => {
+          const newButton = document.createElement('button');
+          newButton.textContent = file;
+          newButton.classList.add('btn', 'btn-info', 'mb-2', 'me-2');
+          newButton.addEventListener('click', () => {
+            socket.emit('playAudio', `/uploads/${file}`);
+          });
+          fileList.appendChild(newButton);
+        });
+      })
+      .catch(error => console.error('Error:', error));
 
     socket.on('playAudio', (filePath) => {
       console.log('playAudio event received on client with filePath:', filePath);
@@ -45,6 +59,17 @@
     uploadForm.addEventListener('submit', (e) => {
       e.preventDefault();
       const file = fileInput.files[0];
+      if (!file) {
+        errorMessage.textContent = 'ファイルを選択してください。';
+        errorMessage.classList.remove('d-none');
+        return;
+      }
+      const allowedTypes = ['audio/mpeg', 'audio/wav', 'audio/ogg'];
+      if (!allowedTypes.includes(file.type)) {
+        errorMessage.textContent = '無効なファイルタイプです。音声ファイルのみアップロードできます。';
+        errorMessage.classList.remove('d-none');
+        return;
+      }
       const formData = new FormData();
       formData.append('file', file);
 
@@ -55,17 +80,20 @@
       .then(response => response.json())
       .then(data => {
         if (data.success) {
-          const newButton = document.createElement('button');
-          newButton.textContent = `${file.name}`;
-          newButton.classList.add('btn', 'btn-info', 'mb-2');
-          newButton.addEventListener('click', () => {
-            socket.emit('playAudio', data.filePath);
-            console.log(data.filePath);
-          });
-          document.body.appendChild(newButton);
+          // アップロード成功後にページをリロード
+          window.location.reload();
+        } else {
+          // エラーメッセージを表示
+          errorMessage.textContent = data.message;
+          errorMessage.classList.remove('d-none');
         }
       })
-      .catch(error => console.error('Error:', error));
+      .catch(error => {
+        console.error('Error:', error);
+        // エラーメッセージを表示
+        errorMessage.textContent = 'アップロードに失敗しました。';
+        errorMessage.classList.remove('d-none');
+      });
     });
   </script>
 </body>

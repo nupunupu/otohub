@@ -3,6 +3,7 @@ const http = require('http');
 const { Server } = require('socket.io');
 const path = require('path');
 const multer = require('multer');
+const fs = require('fs');
 
 const app = express();
 const server = http.createServer(app);
@@ -42,6 +43,33 @@ app.post('/upload', upload.single('file'), (req, res) => {
     return res.status(400).json({ success: false, message: 'No file uploaded' });
   }
   res.json({ success: true, filePath: `/uploads/${req.file.filename}` });
+});
+
+// アップロードされたファイルのリストを返すエンドポイント
+app.get('/audiofiles', (req, res) => {
+  const directoryPath = path.join(__dirname, 'public/uploads');
+  fs.readdir(directoryPath, (err, files) => {
+    if (err) {
+      return res.status(500).json({ error: 'Unable to scan directory' });
+    }
+    res.json(files);
+  });
+});
+
+// 音声ファイルリストを取得するエンドポイントを追加
+app.get('/files', (req, res) => {
+  const directoryPath = path.join(__dirname, 'uploads');
+  fs.readdir(directoryPath, (err, files) => {
+    if (err) {
+      return res.status(500).json({ error: 'Unable to scan directory' });
+    }
+    // 音声ファイルのみをフィルタリング
+    const audioFiles = files.filter(file => {
+      const ext = path.extname(file).toLowerCase();
+      return ext === '.mp3' || ext === '.wav' || ext === '.ogg';
+    });
+    res.json(audioFiles);
+  });
 });
 
 server.listen(port, () => {
