@@ -38,4 +38,4 @@ docker-compose.local.yml
 *.swo
 
 # Ignore items in uploads directory
-uploads/*
+public/uploads/*
